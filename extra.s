@@ -31,3 +31,7 @@
 .ifdef W65C816SXB
 .include "w65c816sxb_extra.s"
 .endif
+
+.ifdef ISA6502
+.include "bios.s"
+.endif
