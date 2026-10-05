@@ -1,36 +1,6 @@
-.if .def(cbmbasic1)
-CBM1 := 1
-.include "defines_cbm1.s"
-.elseif .def(osi)
-OSI := 1
-.include "defines_osi.s"
-.elseif .def(applesoft)
-APPLE := 1
-.include "defines_apple.s"
-.elseif .def(kb9)
-KIM := 1
-.include "defines_kim.s"
-.elseif .def(cbmbasic2)
-CBM2 := 1
-.include "defines_cbm2.s"
-.elseif .def(kbdbasic)
-KBD := 1
-.include "defines_kbd.s"
-.elseif .def(microtan)
-MICROTAN := 1
-.include "defines_microtan.s"
-.elseif .def(aim65)
-AIM65 := 1
-.include "defines_aim65.s"
-.elseif .def(sym1)
-SYM1 := 1
-.include "defines_sym1.s"
-.elseif .def(isa6502)
+.if .def(isa6502)
 ISA6502 := 1
 .include "defines_isa6502.s"
-.elseif .def(w65c816sxb)
-W65C816SXB := 1
-.include "defines_w65c816sxb.s"
 .endif
 
 .ifdef CONFIG_2C
@@ -68,6 +38,7 @@ BYTES_PER_FRAME := 2*BYTES_FP+8
 FOR_STACK1		:= 2*BYTES_FP+5
 FOR_STACK2		:= BYTES_FP+4
 
+
 .ifndef MAX_EXPON
 MAX_EXPON = 10
 .endif
@@ -86,6 +57,7 @@ CONFIG_INPUTBUFFER_0200 := 1
   .endif
 .endif
 INPUTBUFFERX = INPUTBUFFER & $FF00
+
 
 CR=13
 LF=10

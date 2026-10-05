@@ -24,9 +24,6 @@ define_error ERR_SYNTAX, "SYNTAX"
 define_error ERR_NOGOSUB, "RETURN WITHOUT GOSUB"
 define_error ERR_NODATA, "OUT OF DATA"
 define_error ERR_ILLQTY, "ILLEGAL QUANTITY"
-.ifdef CBM1
-	.byte 0,0,0,0,0
-.endif
 define_error ERR_OVERFLOW, "OVERFLOW"
 define_error ERR_MEMFULL, "OUT OF MEMORY"
 define_error ERR_UNDEFSTAT, "UNDEF'D STATEMENT"
@@ -37,11 +34,7 @@ define_error ERR_ILLDIR, "ILLEGAL DIRECT"
 define_error ERR_BADTYPE, "TYPE MISMATCH"
 define_error ERR_STRLONG, "STRING TOO LONG"
 .ifdef CONFIG_FILE
-  .ifdef CBM1
-define_error ERR_BADDATA, "BAD DATA"
-  .else
-define_error ERR_BADDATA, "FILE DATA"
-  .endif
+	define_error ERR_BADDATA, "FILE DATA"
 .endif
 define_error ERR_FRMCPX, "FORMULA TOO COMPLEX"
 define_error ERR_CANTCONT, "CAN'T CONTINUE"

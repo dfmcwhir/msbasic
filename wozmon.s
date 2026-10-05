@@ -10,15 +10,29 @@ H               = $29                   ; Hex value parsing High
 YSAV            = $2A                   ; Used to see if hex value is given
 MODE            = $2B                   ; $00=XAM, $7F=STOR, $AE=BLOCK XAM
 
-IN              = $0500                 ; Input buffer
+IN              = $0200                 ; Input buffer
 
 RESET:
                 CLD                     ; Clear decimal arithmetic mode.
-                JSR     INIT_BUFFER
-                JSR		INIT_IO
-				JSR		INIT_DISPLAY
+				SEI
+				jsr CH_BOOT
+				
+				lda	#0
+				sta DEVSTAT				;clear device status flags
+                lda #0
+				sta IO_BASE
+				lda #$7f
+				sta IO_BASE+1			;store the base address of the io in ZP
+				JSR     INIT_BUFFER
+				JSR		INIT_IO
+	
+				JSR		INIT_SERIAL
+				JSR 	INIT_DISPLAY
+
+STALL1:			;JMP STALL1
+				JSR 	SET_UI_DEVICE ; if init display initalized a device, that is where data will be output to, otherwise serial port
 				CLI
-				;JMP COLD_START
+				JMP COLD_START
 
 
 NOTCR:
@@ -180,4 +194,3 @@ PRHEX:
 ECHO:
 	jsr CHROUT
 	rts
-

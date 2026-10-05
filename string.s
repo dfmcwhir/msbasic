@@ -89,9 +89,6 @@ L32B6:
 .ifdef CONFIG_NO_INPUTBUFFER_ZP
         beq     LD399
         cmp     #>INPUTBUFFER
-.elseif .def(AIM65)
-        beq     LD399
-        cmp     #$01
 .endif
         bne     PUTNEW
 LD399:
@@ -270,15 +267,11 @@ L3376:
 .endif
         iny
         lda     (INDEX),y
-.ifdef CONFIG_CBM1_PATCHES
-        jsr     LE7F3 ; XXX patch, call into screen editor
-.else
   .ifdef CONFIG_11
         ldy     #$00	; GC bugfix
   .endif
         asl     a
         adc     #$05
-.endif
         adc     INDEX
         sta     INDEX
         bcc     L33A7
@@ -531,11 +524,7 @@ L34CD:
 ; RELEASE TEMPORARY DESCRIPTOR IF Y,A = LASTPT
 ; ----------------------------------------------------------------------------
 FRETMS:
-.ifdef KBD
-        cpy     #$00
-.else
         cpy     LASTPT+1
-.endif
         bne     L34E2
         cmp     LASTPT
         bne     L34E2

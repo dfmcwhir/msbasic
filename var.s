@@ -167,24 +167,6 @@ C_ZERO:
 ; ENTER 7-BYTE VARIABLE DATA IN THE HOLE
 ; ----------------------------------------------------------------------------
 MAKENEWVARIABLE:
-.ifdef CONFIG_CBM_ALL
-        lda     VARNAM
-        ldy     VARNAM+1
-        cmp     #$54
-        bne     LD02F
-        cpy     #$C9
-        beq     LD015
-        cpy     #$49
-        bne     LD02F
-LD02C:
-        jmp     SYNERR
-LD02F:
-        cmp     #$53
-        bne     LD037
-        cpy     #$54
-        beq     LD02C
-LD037:
-.endif
         lda     ARYTAB
         ldy     ARYTAB+1
         sta     LOWTR

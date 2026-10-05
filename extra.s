@@ -1,37 +1,9 @@
 .segment "EXTRA"
 
-.ifdef KIM
-.include "kim_extra.s"
-.endif
-
-.ifdef CONFIG_CBM1_PATCHES
-.include "cbm1_patches.s"
-.endif
-
-.ifdef KBD
-.include "kbd_extra.s"
-.endif
-
-.ifdef APPLE
-.include "apple_extra.s"
-.endif
-
-.ifdef MICROTAN
-.include "microtan_extra.s"
-.endif
-
-.ifdef AIM65
-.include "aim65_extra.s"
-.endif
-
-.ifdef SYM1
-        .byte   0,0,0
-.endif
-
-.ifdef W65C816SXB
-.include "w65c816sxb_extra.s"
-.endif
-
 .ifdef ISA6502
-.include "bios.s"
+	.include "bios.s"
+	.include "ch376_loadsave.s" 
+	.include "ch376_abs.s"
+
+;.include "isa6502_extra.s"
 .endif

@@ -335,17 +335,6 @@ L2D36:
 L2D39:
         jsr     ISLETC
         bcs     FRM_VARIABLE
-.ifdef CONFIG_CBM_ALL
-        cmp     #$FF
-        bne     LCDC1
-        lda     #<CON_PI
-        ldy     #>CON_PI
-        jsr     LOAD_FAC_FROM_YA
-        jmp     CHRGET
-CON_PI:
-        .byte   $82,$49,$0f,$DA,$A1
-LCDC1:
-.endif
         cmp     #$2E
         beq     L2D36
         cmp     #TOKEN_MINUS
@@ -394,16 +383,6 @@ EQUOP:
         eor     #$FF
         jmp     GIVAYF
 L2D74:
-.ifdef SYM1
-        cmp     #TOKEN_USR
-        bne     LCC8A
-        jmp     LCDBD
-LCC8A:
-        cmp     #$26
-        bne     LCC91
-        jmp     LCDFE
-LCC91:
-.endif
         cmp     #TOKEN_FN
         bne     L2D7B
         jmp     L31F3
@@ -452,46 +431,8 @@ FRM_VARIABLE:
 FRM_VARIABLE_CALL	= *-1
         sta     FAC_LAST-1
         sty     FAC_LAST
-.ifdef CONFIG_CBM_ALL
-        lda     VARNAM
-        ldy     VARNAM+1
-.endif
         ldx     VALTYP
         beq     L2DB1
-.ifdef CONFIG_CBM_ALL
-  .ifdef CONFIG_CBM1_PATCHES
-        jmp     PATCH2
-        clc
-LCE3B:
-  .else
-        ldx     #$00
-        stx     STRNG1+1
-        bit     FAC+4
-        bpl     LCE53
-        cmp     #$54	; T
-        bne     LCE53
-  .endif
-        cpy     #$C9	; I$
-        bne     LCE53
-        jsr     LCE76
-        sty     EXPON
-        dey
-        sty     STRNG2
-        ldy     #$06
-        sty     INDX
-        ldy     #$24
-        jsr     LDD3A
-        jmp     LD353
-LCE53:
-.endif
-.ifdef CONFIG_2
-  .ifndef CBM2
-; bugfix?
-; fixed on AppleSoft II, not on any CBM
-        ldx     #$00
-        stx     STRNG1+1
-  .endif
-.endif
         rts
 L2DB1:
 .ifndef CONFIG_SMALL
@@ -507,56 +448,8 @@ L2DB1:
         jmp     GIVAYF
 L2DC2:
 .endif
-.ifdef CONFIG_CBM1_PATCHES
-        jmp     PATCH3
-        .byte   $19
-.endif
-.ifdef CBM2
-        bit     FAC+4
-        bpl     LCE90
-        cmp     #$54
-        bne     LCE82
-.endif
-.ifndef CONFIG_CBM_ALL
+
         jmp     LOAD_FAC_FROM_YA
-.endif
-.ifdef CONFIG_CBM_ALL
-LCE69:
-        cpy     #$49
-.ifdef CBM1
-        bne     LCE82
-.else
-        bne     LCE90
-.endif
-        jsr     LCE76
-        tya
-        ldx     #$A0
-        jmp     LDB21
-LCE76:
-.ifdef CBM1
-        lda     #$FE
-        ldy     #$01
-.else
-        lda     #$8B
-        ldy     #$00
-.endif
-        sei
-        jsr     LOAD_FAC_FROM_YA
-        cli
-        sty     FAC+1
-        rts
-LCE82:
-        cmp     #$53
-        bne     LCE90
-        cpy     #$54
-        bne     LCE90
-        lda     Z96
-        jmp     FLOAT
-LCE90:
-        lda     FAC+3
-        ldy     FAC+4
-        jmp     LOAD_FAC_FROM_YA
-.endif
 
 ; ----------------------------------------------------------------------------
 UNARY:
@@ -593,11 +486,7 @@ L2DF4:
         sta     JMPADRS+1
         lda     UNFNC-TOKEN_SGN-TOKEN_SGN+$101,y
         sta     JMPADRS+2
-.ifdef KBD
-        jsr     LF47D
-.else
         jsr     JMPADRS
-.endif
         jmp     CHKNUM
 
 ; ----------------------------------------------------------------------------
@@ -697,92 +586,3 @@ CMPDONE:
         lda     #$FF
 L2E99:
         jmp     FLOAT
-
-.ifdef SYM1
-LCDBD:
-        jsr     CHRGET
-        jsr     CHKOPN
-        jsr     FRMEVL
-        jsr     CHRGOT
-        cmp     #$29
-        beq     LCDF1
-        jsr     AYINT
-        lda     FAC+4
-        ldy     FAC+3
-        sta     USR+1
-        sty     USR+2
-LCDD8:
-        jsr     CHKCOM
-        jsr     FRMEVL
-        jsr     CHRGOT
-        cmp     #$29
-        beq     LCDF1
-        jsr     AYINT
-        lda     FAC+3
-        pha
-        lda     FAC+4
-        pha
-        jmp     LCDD8
-
-LCDF1:
-        jsr     CHRGET
-        jsr     AYINT
-        lda     FAC+3
-        ldy     FAC+4
-        jmp     USR
-
-LCDFE:
-        lda     ZD4
-        pha
-        lda     ZD3
-        pha
-        jsr     CHRGET
-        cmp     #$22
-        bne     LCE49
-        jsr     CHRGET
-        jsr     LCE2B
-        tax
-        jsr     CHRGOT
-        jsr     LCE2B
-        pha
-        jsr     CHRGOT
-        cmp     #$22
-        bne     LCE48
-        jsr     CHRGET
-        pla
-        tay
-        pla
-        pla
-        txa
-        jmp     GIVAYF
-
-LCE2B:
-        jsr     ASCNIB
-        bcs     LCE47
-        pha
-        jsr     CHRGET
-        jsr     ASCNIB
-        sta     FAC+4
-        bcs     LCE46
-        jsr     CHRGET
-        pla
-        asl     a
-        asl     a
-        asl     a
-        asl     a
-        ora     FAC+4
-        rts
-
-LCE46:
-        pla
-LCE47:
-        pla
-LCE48:
-        pla
-LCE49:
-        pla
-        sta     ZD3
-        pla
-        sta     ZD4
-        jmp     ZERO_FAC
-.endif

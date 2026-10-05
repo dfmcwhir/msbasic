@@ -10,47 +10,25 @@
 		keyword_rts "INPUT", INPUT
 		keyword_rts "DIM", DIM
 		keyword_rts "READ", READ
-.ifdef APPLE
-		keyword_rts "PLT", PLT
-.else
 		keyword_rts "LET", LET
-.endif
 		keyword_rts "GOTO", GOTO, TOKEN_GOTO
 		keyword_rts "RUN", RUN
 		keyword_rts "IF", IF
 		keyword_rts "RESTORE", RESTORE
 		keyword_rts "GOSUB", GOSUB, TOKEN_GOSUB
 		keyword_rts "RETURN", POP
-.ifdef APPLE
-		keyword_rts "TEX", TEX, TOKEN_REM
-.else
 		keyword_rts "REM", REM, TOKEN_REM
-.endif
 		keyword_rts "STOP", STOP
 		keyword_rts "ON", ON
 .ifdef CONFIG_NULL
 		keyword_rts "NULL", NULL
 .endif
-.ifdef KBD
-		keyword_rts "PLOD", PLOD
-		keyword_rts "PSAV", PSAV
-		keyword_rts "VLOD", VLOD
-		keyword_rts "VSAV", VSAV
-.endif
 .ifndef CONFIG_NO_POKE
 		keyword_rts "WAIT", WAIT
 .endif
-.ifndef KBD
 		keyword_rts "LOAD", LOAD
 		keyword_rts "SAVE", SAVE
-.endif
-.ifdef CONFIG_CBM_ALL
-		keyword_rts "VERIFY", VERIFY
-.endif
 		keyword_rts "DEF", DEF
-.ifdef KBD
-		keyword_rts "SLOD", SLOD
-.endif
 .ifndef CONFIG_NO_POKE
 		keyword_rts "POKE", POKE
 .endif
@@ -60,11 +38,7 @@
 		keyword_rts "PRINT", PRINT, TOKEN_PRINT
 		keyword_rts "CONT", CONT
 		keyword_rts "LIST", LIST
-.ifdef CONFIG_CBM_ALL
-		keyword_rts "CLR", CLEAR
-.else
 		keyword_rts "CLEAR", CLEAR
-.endif
 .ifdef CONFIG_FILE
 		keyword_rts "CMD", CMD
 		keyword_rts "SYS", SYS
@@ -74,13 +48,8 @@
 .ifndef CONFIG_SMALL
 		keyword_rts "GET", GET
 .endif
-.ifdef KBD
-		keyword_rts "PRT", PRT
-.endif
 		keyword_rts "NEW", NEW
-
 		count_tokens
-
 		keyword	"TAB(", TOKEN_TAB
 		keyword	"TO", TOKEN_TO
 		keyword	"FN", TOKEN_FN
@@ -92,26 +61,19 @@
 		keyword	"-", TOKEN_MINUS
 		keyword	"*"
 		keyword	"/"
-.ifdef KBD
-		keyword	"#"
-.else
 		keyword	"^"
-.endif
 		keyword	"AND"
 		keyword	"OR"
 		keyword	">", TOKEN_GREATER
 		keyword	"=", TOKEN_EQUAL
 		keyword	"<"
 
-        .segment "VECTORS"
+.segment "VECTORS"
 UNFNC:
 
 		keyword_addr "SGN", SGN, TOKEN_SGN
 		keyword_addr "INT", INT
 		keyword_addr "ABS", ABS
-.ifdef KBD
-		keyword_addr "VER", VER
-.endif
 .ifndef CONFIG_NO_POKE
   .ifdef CONFIG_RAM
 		keyword_addr "USR", IQERR

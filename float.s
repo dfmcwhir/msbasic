@@ -86,11 +86,7 @@ L365B:
         lda     ARG
 FADD2:
         tay
-.ifdef KBD
-        beq     RTS4
-.else
         beq     RTS3
-.endif
         sec
         sbc     FAC
         beq     FADD3
@@ -1197,12 +1193,6 @@ L3B6F:
         dex
         bpl     L3B6F
         bcc     FIN2
-.ifdef SYM1
-        cmp     #$26
-        bne     LDABB
-        jmp     LCDFE
-LDABB:
-.endif
         cmp     #$2D
         bne     L3B7E
         stx     SERLEN
@@ -1391,15 +1381,9 @@ CON_BILLION:
 ; PRINT "IN <LINE #>"
 ; ----------------------------------------------------------------------------
 INPRT:
-.ifdef KBD
-        jsr     LFE0B
-        .byte	" in"
-        .byte	0
-.else
         lda     #<QT_IN
         ldy     #>QT_IN
         jsr     GOSTROUT2
-.endif
         lda     CURLIN+1
         ldx     CURLIN
 
@@ -1584,10 +1568,6 @@ L3D3E:
         and     #$80
         tax
         cpy     #DECTBL_END-DECTBL
-.ifdef CONFIG_CBM_ALL
-        beq     LDD96
-        cpy     #$3C ; XXX
-.endif
         bne     L3CF6
 ; ----------------------------------------------------------------------------
 ; NINE DIGITS HAVE BEEN STORED IN STRING.  NOW LOOK
@@ -1674,14 +1654,6 @@ DECTBL:
 		.byte	$FF,$FF,$FF,$FF	; -1
 .endif
 DECTBL_END:
-.ifdef CONFIG_CBM_ALL
-		.byte	$FF,$DF,$0A,$80 ; TI$
-		.byte	$00,$03,$4B,$C0
-		.byte	$FF,$FF,$73,$60
-		.byte	$00,$00,$0E,$10
-		.byte	$FF,$FF,$FD,$A8
-		.byte	$00,$00,$00,$3C
-.endif
 .ifdef CONFIG_2
 C_ZERO = CON_HALF + 2
 .endif

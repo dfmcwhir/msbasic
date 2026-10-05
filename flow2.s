@@ -57,13 +57,8 @@ L2809:
         lda     TXTTAB
         ldx     TXTTAB+1
 L280D:
-.ifdef KBD
-        jsr     LF457
-        bne     UNDERR
-.else
         jsr     FL1
         bcc     UNDERR
-.endif
         lda     LOWTRX
         sbc     #$01
         sta     TXTPTR

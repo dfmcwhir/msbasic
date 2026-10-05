@@ -2,7 +2,7 @@
 .feature org_per_seg
 .zeropage
 
-.org ZP_START1
+	.org ZP_START1
 
 GORESTART:
 	.res 3
@@ -13,7 +13,7 @@ GOAYINT:
 GOGIVEAYF:
 	.res 2
 
-.org ZP_START2
+	.org ZP_START2
 Z15:
 	.res 1
 .ifndef POSX; allow override
@@ -35,9 +35,10 @@ TXPSV:
 	.res 2
 .ifndef INPUTBUFFER; allow override
 INPUTBUFFER:
+	.res $48
 .endif
 
-.org ZP_START3
+	.org ZP_START3
 
 CHARAC:
 	.res 1
@@ -64,7 +65,7 @@ CPRMASK:
 Z14:
 	.res 1
 
-.org ZP_START4
+	.org ZP_START4
 
 TEMPPT:
 	.res 1
@@ -77,8 +78,8 @@ INDEX:
 DEST:
 	.res 2
 RESULT:
-	.res BYTES_FP
-RESULT_LAST = RESULT + BYTES_FP-1
+	.res BYTES_FP   				;5 or 4 if CONFIG_SMALL
+RESULT_LAST = RESULT + BYTES_FP-1 	;1
 TXTTAB:
 	.res 2
 VARTAB:
@@ -96,7 +97,7 @@ MEMSIZ:
 CURLIN:
 	.res 2
 OLDLIN:
-	.res 2
+	.res 2  
 OLDTEXT:
 	.res 2
 Z8C:
@@ -127,7 +128,7 @@ DSCPTR:
 DSCLEN:
 	.res 2
 .ifndef JMPADRS ; allow override
-JMPADRS			:= DSCLEN + 1
+JMPADRS			:= DSCLEN + 1  				
 .endif
 Z52:
 	.res 1
@@ -161,8 +162,8 @@ LOWTRX:
 EXPSGN:
 	.res 1
 FAC:
-	.res BYTES_FP
-FAC_LAST = FAC + BYTES_FP-1
+	.res BYTES_FP 							;5 or 4 if CONFIG_SMALL
+FAC_LAST = FAC + BYTES_FP-1 				;1
 FACSIGN:
 	.res 1
 SERLEN:
@@ -170,34 +171,21 @@ SERLEN:
 SHIFTSIGNEXT:
 	.res 1
 ARG:
-	.res BYTES_FP
-ARG_LAST = ARG + BYTES_FP-1
+	.res BYTES_FP        					;5 or 4 if CONFIG_SMALL
+ARG_LAST = ARG + BYTES_FP-1					;1
 ARGSIGN:
 	.res 1
 STRNG1:
 	.res 2
-SGNCPR = STRNG1
-FACEXTENSION = STRNG1+1
+SGNCPR = STRNG1            					;1
+FACEXTENSION = STRNG1+1						;1
 STRNG2:
 	.res 2
-.ifdef AIM65
-ATN:
-	.res 3
-ZBE:
-	.res 1
-.endif
-.ifdef SYM1
-USR1:
-	.res 3
-USR2:
-	.res 3
-USR3:
-	.res 3
-.endif
+;97
 CHRGET:
-TXTPTR = <(GENERIC_TXTPTR-GENERIC_CHRGET + CHRGET)
-CHRGOT = <(GENERIC_CHRGOT-GENERIC_CHRGET + CHRGET)
-CHRGOT2 = <(GENERIC_CHRGOT2-GENERIC_CHRGET + CHRGET)
-RNDSEED = <(GENERIC_RNDSEED-GENERIC_CHRGET + CHRGET)
+TXTPTR = <(GENERIC_TXTPTR-GENERIC_CHRGET + CHRGET) ;2
+CHRGOT = <(GENERIC_CHRGOT-GENERIC_CHRGET + CHRGET) ;2
+CHRGOT2 = <(GENERIC_CHRGOT2-GENERIC_CHRGET + CHRGET);2
+RNDSEED = <(GENERIC_RNDSEED-GENERIC_CHRGET + CHRGET);2
 
 

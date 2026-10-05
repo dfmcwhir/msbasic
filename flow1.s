@@ -84,9 +84,6 @@ NEWSTT:
         ldy     TXTPTR+1
 .if .def(CONFIG_NO_INPUTBUFFER_ZP) && .def(CONFIG_2)
         cpy     #>INPUTBUFFER
-  .ifdef CBM2
-        nop
-  .endif
         beq     LC6D4
 .else
 ; BUG on AppleSoft I,
@@ -244,19 +241,13 @@ END4:
 L2701:
         lda     #<QT_BREAK
         ldy     #>QT_BREAK
-.ifndef KBD
         ldx     #$00
         stx     Z14
-.endif
         bcc     L270E
         jmp     PRINT_ERROR_LINNUM
 L270E:
         jmp     RESTART
-.ifdef KBD
-LE664:
-        tay
-        jmp     SNGFLT
-.endif
+
 
 ; ----------------------------------------------------------------------------
 ; "CONT" COMMAND
@@ -277,29 +268,6 @@ L271C:
         sty     CURLIN+1
 RET1:
         rts
-
-.ifdef KBD
-PRT:
-        jsr     GETBYT
-        txa
-; not ROR bug safe
-        ror     a
-        ror     a
-        ror     a
-        sta     $8F
-        rts
-
-LE68C:
-        ldy     #$12
-LE68E:
-        lda     LEA30,y
-        sta     $03A2,y
-        dey
-        bpl     LE68E
-        rts
-.endif
-
-.ifndef AIM65
 .if .def(CONFIG_NULL) || .def(CONFIG_PRINTNULLS)
 ; CBM1 has the keyword removed,
 ; but the code is still here
@@ -321,4 +289,4 @@ CLEAR:
         bne     RET1
         jmp     CLEARC
 .endif
-.endif
+

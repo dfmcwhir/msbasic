@@ -52,24 +52,8 @@ PEEK:
 .endif
         jsr     GETADR
         ldy     #$00
-.ifdef CBM1
-; disallow PEEK between $C000 and $DFFF
-        cmp     #$C0
-        bcc     LD6F3
-        cmp     #$E1
-        bcc     LD6F6
-LD6F3:
-.endif
-.ifdef CBM2
-		nop ; patch that disables the compares above
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-		nop
-.endif
+
+
         lda     (LINNUM),y
         tay
 .ifdef CONFIG_PEEK_SAVE_LINNUM

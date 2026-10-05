@@ -39,9 +39,6 @@ L2329:
         jsr     OUTDO
 .ifdef CONFIG_SMALL_ERROR
         lda     ERROR_MESSAGES+1,x
-  .ifdef KBD
-        and     #$7F
-  .endif
         jsr     OUTDO
 .else
         inx
@@ -68,31 +65,12 @@ PRINT_ERROR_LINNUM:
 ; WARM RESTART ENTRY
 ; ----------------------------------------------------------------------------
 RESTART:
-.ifdef KBD
-        jsr     CRDO
-        nop
-L2351X:
-        jsr     OKPRT
-L2351:
-        jsr     INLIN
-LE28E:
-        bpl     RESTART
-.else
         lsr     Z14
- .ifndef AIM65
         lda     #<QT_OK
         ldy     #>QT_OK
-  .ifdef CONFIG_CBM_ALL
-        jsr     STROUT
-  .else
         jsr     GOSTROUT
-  .endif
- .else
-        jsr     GORESTART
- .endif
 L2351:
         jsr     INLIN
-.endif
         stx     TXTPTR
         sty     TXTPTR+1
         jsr     CHRGET
@@ -102,11 +80,7 @@ L2351:
 ; direct mode gets ignored
         tax
 .endif
-.ifdef KBD
-        beq     L2351X
-.else
         beq     L2351
-.endif
         ldx     #$FF
         stx     CURLIN+1
         bcc     NUMBERED_LINE
@@ -120,57 +94,6 @@ NUMBERED_LINE:
         jsr     LINGET
         jsr     PARSE_INPUT_LINE
         sty     EOLPNTR
-.ifdef KBD
-        jsr     FNDLIN2
-        lda     JMPADRS+1
-        sta     LOWTR
-        sta     Z96
-        lda     JMPADRS+2
-        sta     LOWTR+1
-        sta     Z96+1
-        lda     LINNUM
-        sta     L06FE
-        lda     LINNUM+1
-        sta     L06FE+1
-        inc     LINNUM
-        bne     LE2D2
-        inc     LINNUM+1
-        bne     LE2D2
-        jmp     SYNERR
-LE2D2:
-        jsr     LF457
-        ldx     #Z96
-        jsr     CMPJMPADRS
-        bcs     LE2FD
-LE2DC:
-        ldx     #$00
-        lda     (JMPADRS+1,x)
-        sta     (Z96,x)
-        inc     JMPADRS+1
-        bne     LE2E8
-        inc     JMPADRS+2
-LE2E8:
-        inc     Z96
-        bne     LE2EE
-        inc     Z96+1
-LE2EE:
-        ldx     #VARTAB
-        jsr     CMPJMPADRS
-        bne     LE2DC
-        lda     Z96
-        sta     VARTAB
-        lda     Z96+1
-        sta     VARTAB+1
-LE2FD:
-        jsr     SETPTRS
-        jsr     LE33D
-        lda     INPUTBUFFER
-LE306:
-        beq     LE28E
-        cmp     #$A5
-        beq     LE306
-        clc
-.else
         jsr     FNDLIN
         bcc     PUT_NEW_LINE
         ldy     #$01
@@ -214,10 +137,9 @@ L23AD:
         inc     DEST+1
         dex
         bne     L23AD
-.endif
+
 ; ----------------------------------------------------------------------------
 PUT_NEW_LINE:
-.ifndef KBD
   .ifdef CONFIG_2
         jsr     SETPTRS
         jsr     LE33D
@@ -232,7 +154,6 @@ PUT_NEW_LINE:
         sta     FRETOP
         sty     FRETOP+1
   .endif
-.endif
         lda     VARTAB
         sta     HIGHTR
         adc     EOLPNTR
@@ -307,9 +228,7 @@ L2405:
         bcc     L23FA	; always
 
 ; ----------------------------------------------------------------------------
-.ifdef KBD
-.include "kbd_loadsave.s"
-.endif
+
 
 .ifdef CONFIG_2
 ; !!! kbd_loadsave.s requires an RTS here!
@@ -328,14 +247,6 @@ PARSE_INPUT_LINE:
         sty     DATAFLG
 L246C:
         lda     INPUTBUFFERX,x
-.ifdef CONFIG_CBM_ALL
-        bpl     LC49E
-        cmp     #$FF
-        beq     L24AC
-        inx
-        bne     L246C
-LC49E:
-.endif
         cmp     #$20
         beq     L24AC
         sta     ENDCHR
@@ -368,15 +279,11 @@ L2496:
 L2497:
         inx
 L2498:
-.ifdef KBD
-        jsr     GET_UPPER
-.else
         lda     INPUTBUFFERX,x
   .ifndef CONFIG_2
         cmp     #$20
         beq     L2497
   .endif
-.endif
         sec
         sbc     TOKEN_NAME_TABLE,y
         beq     L2496
@@ -454,32 +361,6 @@ L24EA:
 ;	LOWTR POINTS AT LINE
 ; ----------------------------------------------------------------------------
 FNDLIN:
-.ifdef KBD
-        jsr     CHRGET
-        jmp     LE444
-LE440:
-        php
-        jsr     LINGET
-LE444:
-        jsr     LF457
-        ldx     #$FF
-        plp
-        beq     LE464
-        jsr     CHRGOT
-        beq     L2520
-        cmp     #$A5
-        bne     L2520
-        jsr     CHRGET
-        beq     LE464
-        bcs     LE461
-        jsr     LINGET
-        beq     L2520
-LE461:
-        jmp     SYNERR
-LE464:
-        stx     LINNUM
-        stx     LINNUM+1
-.else
         lda     TXTTAB
         ldx     TXTTAB+1
 FL1:
@@ -511,7 +392,6 @@ L2516:
         bcs     FL1
 L251F:
         clc
-.endif
 L2520:
         rts
 
@@ -548,18 +428,10 @@ CLEAR:
         bne     L256A
 .endif
 CLEARC:
-.ifdef KBD
-        lda     #<CONST_MEMSIZ
-        ldy     #>CONST_MEMSIZ
-.else
         lda     MEMSIZ
         ldy     MEMSIZ+1
-.endif
         sta     FRETOP
         sty     FRETOP+1
-.ifdef CONFIG_CBM_ALL
-        jsr     CLALL
-.endif
         lda     VARTAB
         ldy     VARTAB+1
         sta     ARYTAB
@@ -607,121 +479,39 @@ STXTPT:
         sta     TXTPTR+1
         rts
 
-; ----------------------------------------------------------------------------
-.ifdef KBD
-LE4C0:
-        ldy     #<LE444
-        ldx     #>LE444
-LE4C4:
-        jsr     LFFD6
-        jsr     LFFED
-        lda     $0504
-        clc
-        adc     #$08
-        sta     $0504
-        rts
-
-CMPJMPADRS:
-        lda     1,x
-        cmp     JMPADRS+2
-        bne     LE4DE
-        lda     0,x
-        cmp     JMPADRS+1
-LE4DE:
-        rts
-.endif
 
 ; ----------------------------------------------------------------------------
 ; "LIST" STATEMENT
 ; ----------------------------------------------------------------------------
 LIST:
-.ifdef KBD
-        jsr     LE440
-        bne     LE4DE
-        pla
-        pla
-L25A6:
-        jsr     CRDO
-.else
-    .ifdef AIM65
-        pha
-        lda     #$00
-LB4BF:
-        sta     INPUTFLG
-        pla
-    .endif
-  .ifdef MICROTAN
-        php
-        jmp     LE21C ; patch
-LC57E:
-   .elseif .def(AIM65) || .def(SYM1)
-        php
-        jsr     LINGET
-LC57E:
-  .else
         bcc     L2581
         beq     L2581
         cmp     #TOKEN_MINUS
         bne     L256A
 L2581:
         jsr     LINGET
-  .endif
         jsr     FNDLIN
-  .if .def(MICROTAN) || .def(AIM65) || .def(SYM1)
-        plp
-        beq     L2598
-  .endif
         jsr     CHRGOT
-  .if .def(MICROTAN) || .def(AIM65) || .def(SYM1)
-        beq     L25A6
-  .else
         beq     L2598
-  .endif
         cmp     #TOKEN_MINUS
         bne     L2520
         jsr     CHRGET
-  .if .def(MICROTAN) || .def(AIM65) || .def(SYM1)
-        beq     L2598
-        jsr     LINGET
-        beq     L25A6
-        rts
-  .else
         jsr     LINGET
         bne     L2520
-  .endif
 L2598:
-  .if !(.def(MICROTAN) || .def(AIM65) || .def(SYM1))
-        pla
-        pla
-        lda     LINNUM
-        ora     LINNUM+1
-        bne     L25A6
-  .endif
         lda     #$FF
         sta     LINNUM
         sta     LINNUM+1
 L25A6:
-  .if .def(MICROTAN) || .def(AIM65) || .def(SYM1)
-        pla
-        pla
-  .endif
 L25A6X:
-.endif
         ldy     #$01
 .ifdef CONFIG_DATAFLG
         sty     DATAFLG
 .endif
         lda     (LOWTRX),y
         beq     L25E5
-.ifdef MICROTAN
-        jmp     LE21F
-LC5A9:
-.else
         jsr     ISCNTC
-.endif
-.ifndef KBD
         jsr     CRDO
-.endif
         iny
         lda     (LOWTRX),y
         tax
@@ -764,22 +554,8 @@ LA519:
         lda     (LOWTRX),y
         stx     LOWTRX
         sta     LOWTRX+1
-.if .def(MICROTAN) || .def(AIM65) || .def(SYM1)
-        bne     L25A6X
-.else
         bne     L25A6
-.endif
 L25E5:
-.ifdef AIM65
-        lda     INPUTFLG
-        beq     L25E5a
-        jsr     CRDO
-        jsr     CRDO
-        lda     #$1a
-        jsr     OUTDO
-        jsr     $e50a
-L25E5a:
-.endif
         jmp     RESTART
 L25E8:
         bpl     L25CE
