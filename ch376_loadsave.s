@@ -5,6 +5,10 @@
 ;
 ;   LOAD "NAME"      -> reads /NAME.BAS into the BASIC program area
 ;   SAVE "NAME"      -> writes the current program to /NAME.BAS
+;   LOAD "$"         -> lists the files in the root directory (the program in
+;                       memory is NOT touched)
+;   LOAD "$T*"       -> lists only matching files (the CH376's own wildcard
+;                       matching, e.g. "$*.BAS" or "$GAME*")
 ;
 ;   - The name is any string expression, converted to UPPERCASE.
 ;   - ".BAS" is appended if the name contains no ".".
@@ -36,7 +40,18 @@ CH_NAME_MAX = 26                    ; longest name typed by the user
 ch_name   = VARS+13                 ; 32 bytes: "/NAME.BAS",0
 ch_ready  = VARS+45                 ; 0 = CH376 not initialised / mounted
 ch_dot    = VARS+46                 ; non-zero if the name contained a "."
-                                    ; (whole block ends at $0445)
+ch_dir    = VARS+47                 ; non-zero: LOAD "$..." (directory listing)
+ch_ent    = VARS+48                 ; 32 bytes: directory entry from the chip
+ch_num    = VARS+80                 ; 4 bytes: number being printed
+ch_col    = VARS+84                 ; column counter while printing a name
+ch_started = VARS+85                ; leading-zero suppression flag
+ch_nfiles = VARS+86                 ; 2 bytes: files listed
+ch_sx     = VARS+88                 ; saved X / Y around OUTDO
+ch_sy     = VARS+89
+                                    ; (whole block ends at VARS+89; check it
+                                    ;  stays below RAMSTART2)
+
+CMD_FILE_ENUM_GO = $33              ; next directory entry
 
 ; --- private failure codes (CH376 codes are all < $F0)
 CH_E_TOOBIG  = $F0
@@ -65,7 +80,10 @@ CH_BOOT:
 ; ----------------------------------------------------------------------------
 LOAD:
         jsr ch_get_filename
-        jsr ch_prepare
+        lda ch_dir                  ; LOAD "$..." -> directory listing
+        beq @file
+        jmp ch_dirlist
+@file:  jsr ch_prepare
         bcc @ready
         lda #CH_E_NODISK
         jmp ch_fail
@@ -120,7 +138,11 @@ LOAD:
 ; ----------------------------------------------------------------------------
 SAVE:
         jsr ch_get_filename
-        jsr ch_prepare
+        lda ch_dir                  ; SAVE "$..." makes no sense
+        beq @ok1
+        ldx #ERR_ILLQTY
+        jmp ERROR
+@ok1:   jsr ch_prepare
         bcc @ready
         lda #CH_E_NODISK
         jmp ch_fail
@@ -169,10 +191,24 @@ ch_get_filename:
         jmp ERROR
 @ok:    lda #0
         sta ch_dot
+        sta ch_dir
         lda #'/'
         sta ch_name
         ldx #1                      ; X = index into ch_name
         ldy #0                      ; Y = index into the BASIC string
+        lda (INDEX),y
+        cmp #'$'
+        bne @copy
+        lda #1                      ; "$..." = directory request
+        sta ch_dir
+        sta ch_dot                  ; (so no ".BAS" is appended)
+        iny                         ; skip the "$"
+        cpy ch_cnt
+        bne @copy                   ; "$pattern": copy the pattern
+        lda #'*'                    ; plain "$": match everything
+        sta ch_name,x
+        inx
+        bne @term                   ; always taken
 @copy:  lda (INDEX),y
         cmp #'.'
         bne @upper
@@ -222,6 +258,194 @@ ch_prepare:
         rts
 @fail:  sec
         rts
+
+; ----------------------------------------------------------------------------
+; ch_dirlist - LOAD "$" : list the directory named by ch_name ("/*" etc.)
+;
+; CH376 enumeration: SET_FILE_NAME "/*", FILE_OPEN. For every match the chip
+; interrupts with USB_INT_DISK_READ and the 32-byte FAT directory entry can
+; be read with RD_USB_DATA0.  FILE_ENUM_GO fetches the next one; ERR_MISS_FILE
+; ($42) means there are no more.
+;
+; Entry layout: 0-7 name, 8-10 extension (space padded), 11 attributes,
+;               28-31 file size (little endian)
+; ----------------------------------------------------------------------------
+ch_dirlist:
+        jsr ch_prepare
+        bcc @ready
+        lda #CH_E_NODISK
+        jmp ch_fail
+@ready: lda #0
+        sta ch_nfiles
+        sta ch_nfiles+1
+        lda #<ch_name
+        ldx #>ch_name
+        jsr ch_set_name
+        lda #CMD_FILE_OPEN
+        jsr ch_cmd
+@next:  jsr ch_wait_status
+        cmp #USB_INT_DISK_READ      ; $1D = an entry is available
+        bne @end
+        lda #CMD_RD_USB_DATA0
+        jsr ch_cmd
+        jsr ch_rd                   ; length (normally 32)
+        sta ch_cnt
+        ldy #0
+@rd:    cpy ch_cnt
+        bcs @got
+        jsr ch_rd
+        cpy #32
+        bcs @skip                   ; never overflow ch_ent
+        sta ch_ent,y
+@skip:  iny
+        bne @rd
+@got:   lda ch_cnt
+        cmp #32
+        bcc @more                   ; short entry: ignore it
+        jsr ch_print_entry
+@more:  lda #CMD_FILE_ENUM_GO
+        jsr ch_cmd
+        jmp @next
+@end:   cmp #ERR_MISS_FILE          ; $42 = end of directory
+        beq @done
+        jmp ch_fail                 ; anything else is a real error
+@done:  lda ch_nfiles
+        ora ch_nfiles+1
+        bne @ret
+        lda #<msg_nofiles
+        ldy #>msg_nofiles
+        jsr STROUT
+@ret:   rts                         ; back to BASIC ("OK")
+
+; ch_print_entry - print one line for the entry in ch_ent, or nothing if it is
+; a volume label / hidden / system entry
+ch_print_entry:
+        lda ch_ent+11
+        and #$0E                    ; volume label, hidden, system
+        beq @show
+        rts
+@show:  inc ch_nfiles
+        bne @c1
+        inc ch_nfiles+1
+@c1:    ldy #0
+@name:  lda ch_ent,y
+        cmp #' '
+        beq @namedone
+        jsr ch_putc
+        iny
+        cpy #8
+        bcc @name
+@namedone:
+        sty ch_col                  ; characters printed so far
+        lda ch_ent+8
+        cmp #' '
+        beq @pad                    ; no extension
+        lda #'.'
+        jsr ch_putc
+        inc ch_col
+        ldy #8
+@ext:   lda ch_ent,y
+        cmp #' '
+        beq @pad
+        jsr ch_putc
+        inc ch_col
+        iny
+        cpy #11
+        bcc @ext
+@pad:   lda #' '                    ; pad the name field to 13 columns
+        jsr ch_putc
+        inc ch_col
+        lda ch_col
+        cmp #13
+        bcc @pad
+        lda ch_ent+11
+        and #$10                    ; directory?
+        beq @size
+        lda #<msg_dir
+        ldy #>msg_dir
+        jsr STROUT
+        jmp @eol
+@size:  ldx #3                      ; size -> ch_num
+@cp:    lda ch_ent+28,x
+        sta ch_num,x
+        dex
+        bpl @cp
+        jsr ch_print_num
+@eol:   jmp CRDO                    ; end of line (tail call)
+
+; ch_print_num - print the 32-bit number in ch_num right-aligned in 10 columns
+ch_print_num:
+        lda #0
+        sta ch_started
+        ldy #0                      ; Y = 4 * index into ch_pow10
+@digit: ldx #0                      ; X = this digit
+@sub:   sec
+        lda ch_num
+        sbc ch_pow10,y
+        sta ch_num
+        lda ch_num+1
+        sbc ch_pow10+1,y
+        sta ch_num+1
+        lda ch_num+2
+        sbc ch_pow10+2,y
+        sta ch_num+2
+        lda ch_num+3
+        sbc ch_pow10+3,y
+        sta ch_num+3
+        bcc @undo                   ; went negative: digit is complete
+        inx
+        jmp @sub
+@undo:  clc                         ; add the power back
+        lda ch_num
+        adc ch_pow10,y
+        sta ch_num
+        lda ch_num+1
+        adc ch_pow10+1,y
+        sta ch_num+1
+        lda ch_num+2
+        adc ch_pow10+2,y
+        sta ch_num+2
+        lda ch_num+3
+        adc ch_pow10+3,y
+        sta ch_num+3
+        lda ch_started
+        bne @pr
+        txa
+        bne @pr
+        cpy #36                     ; last digit is always printed
+        beq @pr
+        lda #' '                    ; leading zero -> space
+        jmp @out
+@pr:    lda #1
+        sta ch_started
+        txa
+        clc
+        adc #'0'
+@out:   jsr ch_putc
+        tya
+        clc
+        adc #4
+        tay
+        cpy #40
+        beq @fin
+        jmp @digit
+@fin:   rts
+
+ch_pow10:
+        .dword 1000000000, 100000000, 10000000, 1000000, 100000
+        .dword 10000, 1000, 100, 10, 1
+
+; ch_putc - OUTDO that preserves X and Y
+ch_putc:
+        stx ch_sx
+        sty ch_sy
+        jsr OUTDO
+        ldx ch_sx
+        ldy ch_sy
+        rts
+
+msg_dir:     .byte "     <DIR>",0
+msg_nofiles: .byte "NO FILES",13,10,0
 
 ; ----------------------------------------------------------------------------
 ; Error exits.  A = CH376 status or one of the CH_E_ codes.
