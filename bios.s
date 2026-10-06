@@ -200,20 +200,22 @@ CHRIN:
 MONCOUT:
 CHROUT:
 	sta LAST_CHAR
+	pha
 	tya
 	pha
 	ldy UI_DATA_OFF
 	lda LAST_CHAR
 	sta IO_BASE,Y
-	pha
+	;pha
 tx_wait:
 	ldy UI_STATUS_OFF
 	lda IO_BASE,Y
 	and #$10
 	beq tx_wait
-	pla
+	;pla
 	pla
 	tay
+	pla
 	rts
 
 ; Initialize the circular input buffer

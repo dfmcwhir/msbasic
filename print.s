@@ -97,7 +97,8 @@ L29D9:
         pla
         tax
   .else
-    .ifndef CONFIG_2
+    ;.ifndef CONFIG_2
+	.if (!.def(CONFIG_2)) || .def(ISA6502)    ; was:  .ifndef CONFIG_2
         lda     #$00
         sta     POSX
     .endif
